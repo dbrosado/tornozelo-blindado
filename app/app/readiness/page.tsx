@@ -103,14 +103,14 @@ export default function ReadinessPage() {
             <div className="grid grid-cols-2 gap-4">
               <Button
                 variant={recentFall === false ? "default" : "outline"}
-                className={recentFall === false ? "bg-primary text-carbon h-32 text-xl font-chakra font-bold" : "h-32 text-xl font-chakra bg-blueprint/20 border-grid hover:bg-grid/20"}
+                className={recentFall === false ? "bg-primary text-carbon h-32 text-xl font-chakra font-bold" : "h-32 text-xl font-chakra bg-blueprint/20 border-grid hover:bg-grid/20 text-white"}
                 onClick={() => setRecentFall(false)}
               >
                 NÃO
               </Button>
               <Button
                 variant={recentFall === true ? "destructive" : "outline"}
-                className={recentFall === true ? "h-32 text-xl font-chakra font-bold" : "h-32 text-xl font-chakra bg-blueprint/20 border-grid hover:bg-grid/20"}
+                className={recentFall === true ? "h-32 text-xl font-chakra font-bold" : "h-32 text-xl font-chakra bg-blueprint/20 border-grid hover:bg-grid/20 text-white"}
                 onClick={() => setRecentFall(true)}
               >
                 SIM
@@ -128,21 +128,21 @@ export default function ReadinessPage() {
             <div className="space-y-3">
               <Button
                 fullWidth
-                className={microTest === 'firm' ? "bg-primary text-carbon h-16 text-lg justify-start px-6" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20"}
+                className={microTest === 'firm' ? "bg-primary text-carbon h-16 text-lg justify-start px-6 font-bold" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20 text-white"}
                 onClick={() => setMicroTest('firm')}
               >
                 <CheckCircle className="mr-3 h-5 w-5" /> Firme (Fácil)
               </Button>
               <Button
                 fullWidth
-                className={microTest === 'shaky' ? "bg-warning text-carbon h-16 text-lg justify-start px-6" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20"}
+                className={microTest === 'shaky' ? "bg-warning text-carbon h-16 text-lg justify-start px-6 font-bold" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20 text-white"}
                 onClick={() => setMicroTest('shaky')}
               >
                 <AlertTriangle className="mr-3 h-5 w-5" /> Tremido (Esforço)
               </Button>
               <Button
                 fullWidth
-                className={microTest === 'unstable' ? "bg-danger text-white h-16 text-lg justify-start px-6" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20"}
+                className={microTest === 'unstable' ? "bg-danger text-white h-16 text-lg justify-start px-6 font-bold" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20 text-white"}
                 onClick={() => setMicroTest('unstable')}
               >
                 <AlertTriangle className="mr-3 h-5 w-5" /> Instável (Apoiei)
