@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, ArrowLeft, CheckCircle, Volume2, VolumeX, Timer, Mic } from "lucide-react";
+import { Play, Pause, SkipForward, ArrowLeft, CheckCircle, Timer, Mic } from "lucide-react";
 import { useAppStore, AudioMode } from "@/lib/store";
 import { LEVELS as WORKOUT_LEVELS } from "@/lib/data/workouts";
 import { getStageById } from "@/lib/data/cultivation-system";
 import { getExerciseVideoUrl } from "@/lib/data/exercise-videos";
 import { speak, stopSpeaking } from "@/lib/tts";
+import { playBeep, playCountdownBeep, playGoBeep, playCompleteBeep, playRestBeep, playFinishFanfare } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -72,10 +73,12 @@ export default function SessionPage() {
     if (firstIsRest) {
       setPhase('rest');
       setTimeLeft(firstExercise?.duration || 30);
+      playRestBeep();
       if (isVoiceEnabled && firstExercise?.audio?.start) speak(firstExercise.audio.start);
     } else {
       setPhase('prep');
       setTimeLeft(PREP_DURATION);
+      playBeep(600, 150);
       if (isVoiceEnabled && firstExercise) speak(`Preparando. Próximo exercício: ${firstExercise.name}. Você tem 10 segundos.`);
     }
   }, [isVoiceEnabled, exercises, resetAnnouncements]);
@@ -83,9 +86,11 @@ export default function SessionPage() {
   const goToNextExercise = useCallback(() => {
     const nextIndex = exerciseIndex + 1;
     setCompletedExercises(prev => prev + 1);
+    playCompleteBeep();
 
     if (nextIndex >= totalExercises) {
       setPhase('finished');
+      playFinishFanfare();
       if (isVoiceEnabled) speak("Treino concluído! Parabéns pela dedicação.");
       return;
     }
@@ -99,11 +104,13 @@ export default function SessionPage() {
     if (nextIsRest) {
       setPhase('rest');
       setTimeLeft(next?.duration || 30);
+      playRestBeep();
       if (isVoiceEnabled && next?.audio?.start) speak(next.audio.start);
       else if (isVoiceEnabled) speak("Descansa.");
     } else {
       setPhase('prep');
       setTimeLeft(PREP_DURATION);
+      playBeep(600, 150);
       if (isVoiceEnabled && next) speak(`Próximo: ${next.name}. Prepare-se.`);
     }
   }, [exerciseIndex, totalExercises, exercises, isVoiceEnabled, resetAnnouncements]);
@@ -118,7 +125,12 @@ export default function SessionPage() {
       startWorkout();
     } else if (phase !== 'finished') {
       setIsPaused(prev => !prev);
-      if (isVoiceEnabled && !isPaused) speak("Pausado.");
+      if (!isPaused) {
+        playBeep(400, 100);
+        if (isVoiceEnabled) speak("Pausado.");
+      } else {
+        playBeep(600, 100);
+      }
     }
   }, [phase, startWorkout, isVoiceEnabled, isPaused]);
 
@@ -129,6 +141,7 @@ export default function SessionPage() {
     if (newMode === 'timer') {
       stopSpeaking();
     }
+    playBeep(800, 100);
   };
 
   // Pause/play video when workout pauses
@@ -151,6 +164,7 @@ export default function SessionPage() {
           if (phase === 'prep') {
             setPhase('exercise');
             announcedStart.current = false;
+            playGoBeep();
             if (isVoiceEnabled) speak("Começa!");
             return currentExercise?.duration || 30;
           }
@@ -161,7 +175,11 @@ export default function SessionPage() {
           return 0;
         }
 
-        if (phase === 'prep' && prev === 4 && isVoiceEnabled) speak("3, 2, 1, Vai!");
+        // Countdown beeps in last 3 seconds of prep
+        if (phase === 'prep' && prev <= 4 && prev > 1) {
+          playCountdownBeep();
+          if (prev === 4 && isVoiceEnabled) speak("3, 2, 1, Vai!");
+        }
 
         if (phase === 'exercise' && currentExercise) {
           const duration = currentExercise.duration;
@@ -183,12 +201,25 @@ export default function SessionPage() {
 
           if (!announcedEnd.current && prev === 5) {
             announcedEnd.current = true;
+            // Beep for last 5 seconds warning
+            playBeep(500, 100);
             if (isVoiceEnabled && currentExercise.audio?.end) speak(currentExercise.audio.end);
+          }
+          
+          // Beep every second in last 3 seconds
+          if (prev <= 3 && prev > 0) {
+            playCountdownBeep();
           }
         }
 
-        if (phase === 'rest' && prev === 5 && isVoiceEnabled && currentExercise?.audio?.end) {
-          speak(currentExercise.audio.end);
+        if (phase === 'rest' && prev === 5) {
+          playBeep(500, 100);
+          if (isVoiceEnabled && currentExercise?.audio?.end) speak(currentExercise.audio.end);
+        }
+        
+        // Beep every second in last 3 seconds of rest
+        if (phase === 'rest' && prev <= 3 && prev > 0) {
+          playCountdownBeep();
         }
 
         return prev - 1;
@@ -214,8 +245,8 @@ export default function SessionPage() {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-8 min-h-[80vh] px-6 animate-in zoom-in duration-500 bg-zinc-950">
         <div className="relative">
-          <div className="absolute inset-0 bg-volt/20 blur-3xl rounded-full" />
-          <div className="relative text-volt mb-4 p-8 bg-zinc-900 rounded-full border border-volt/30 shadow-glow-volt animate-pulse">
+          <div className="absolute inset-0 bg-lime-400/20 blur-3xl rounded-full" />
+          <div className="relative text-lime-400 mb-4 p-8 bg-zinc-900 rounded-full border border-lime-400/30 shadow-[0_0_30px_rgba(163,230,53,0.4)] animate-pulse">
             <CheckCircle className="h-24 w-24" />
           </div>
         </div>
@@ -229,7 +260,7 @@ export default function SessionPage() {
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
-          className="w-full max-w-xs h-16 text-xl bg-volt text-zinc-950 font-bold uppercase tracking-wider shadow-glow-volt rounded-xl"
+          className="w-full max-w-xs h-16 text-xl bg-lime-400 text-zinc-950 font-bold uppercase tracking-wider shadow-[0_0_30px_rgba(163,230,53,0.4)] rounded-xl"
           onClick={handleFinish}
         >
           Avaliar Treino
@@ -242,7 +273,7 @@ export default function SessionPage() {
     switch (phase) {
       case 'ready': return { label: 'PRONTO', text: 'text-zinc-500', glow: '' };
       case 'prep': return { label: 'PREPARAR', text: 'text-amber-400', glow: 'shadow-[0_0_30px_rgba(251,191,36,0.2)]' };
-      case 'exercise': return { label: 'GO', text: 'text-volt', glow: 'shadow-[0_0_40px_rgba(163,230,53,0.3)]' };
+      case 'exercise': return { label: 'GO', text: 'text-lime-400', glow: 'shadow-[0_0_40px_rgba(163,230,53,0.3)]' };
       case 'rest': return { label: 'DESCANSO', text: 'text-cyan-400', glow: 'shadow-[0_0_30px_rgba(34,211,238,0.2)]' };
       default: return { label: '', text: '', glow: '' };
     }
@@ -258,7 +289,7 @@ export default function SessionPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/50 via-zinc-950 to-zinc-950" />
         <motion.div 
           animate={{ opacity: phase === 'exercise' ? 0.1 : 0 }}
-          className="absolute inset-0 bg-volt mix-blend-overlay"
+          className="absolute inset-0 bg-lime-400 mix-blend-overlay"
         />
       </div>
 
@@ -269,7 +300,7 @@ export default function SessionPage() {
             <ArrowLeft className="h-6 w-6" />
           </Button>
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-volt uppercase tracking-[0.2em]">
+            <span className="text-[10px] font-bold text-lime-400 uppercase tracking-[0.2em]">
               {stageInfo.emoji} {currentWorkout.title}
             </span>
             <span className={cn("text-xs font-bold uppercase tracking-widest", styles.text)}>
@@ -285,7 +316,7 @@ export default function SessionPage() {
             title={audioMode === 'voice' ? 'Voz Narrando' : 'Apenas Timer'}
           >
             {audioMode === 'voice' ? (
-              <Mic className="h-6 w-6 text-volt" />
+              <Mic className="h-6 w-6 text-lime-400" />
             ) : (
               <Timer className="h-6 w-6 text-amber-400" />
             )}
@@ -297,10 +328,10 @@ export default function SessionPage() {
           <div className={cn(
             "text-[9px] uppercase tracking-widest px-3 py-1 rounded-full border",
             audioMode === 'voice' 
-              ? "bg-volt/10 border-volt/30 text-volt" 
+              ? "bg-lime-400/10 border-lime-400/30 text-lime-400" 
               : "bg-amber-400/10 border-amber-400/30 text-amber-400"
           )}>
-            {audioMode === 'voice' ? '🎙️ Voz Narrando' : '⏱️ Apenas Timer'}
+            {audioMode === 'voice' ? '��️ Voz Narrando' : '⏱️ Timer + Bips'}
           </div>
         </div>
 
@@ -312,7 +343,7 @@ export default function SessionPage() {
           </div>
           <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-white/5">
             <motion.div
-              className="h-full bg-volt shadow-[0_0_10px_rgba(163,230,53,0.5)]"
+              className="h-full bg-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.5)]"
               initial={{ width: 0 }}
               animate={{ width: `${overallProgress}%` }}
               transition={{ duration: 0.5 }}
@@ -338,7 +369,7 @@ export default function SessionPage() {
 
             {/* Video Player */}
             {videoUrl && phase !== 'ready' && !isRestExercise(currentExercise?.name || '') && (
-              <div className="relative w-full max-w-[280px] mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-glass bg-zinc-900/50">
+              <div className="relative w-full max-w-[280px] mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-zinc-900/50">
                 <video
                   ref={videoRef}
                   src={videoUrl}
@@ -354,7 +385,7 @@ export default function SessionPage() {
 
             {phase !== 'ready' && currentExercise && !videoUrl && (
               <div className={cn(
-                "p-4 rounded-2xl backdrop-blur-md border border-white/5 max-w-sm mx-auto shadow-glass",
+                "p-4 rounded-2xl backdrop-blur-md border border-white/5 max-w-sm mx-auto shadow-lg",
                 phase === 'rest' ? "bg-cyan-950/30" : "bg-zinc-900/60"
               )}>
                 <p className="text-sm text-zinc-300 leading-relaxed font-medium">
@@ -370,7 +401,7 @@ export default function SessionPage() {
           <div className={cn(
             "absolute inset-0 blur-[60px] rounded-full transition-all duration-700 opacity-40",
             phase === 'prep' && "bg-amber-500",
-            phase === 'exercise' && (timeLeft <= 10 ? "bg-red-500" : "bg-volt"),
+            phase === 'exercise' && (timeLeft <= 10 ? "bg-red-500" : "bg-lime-400"),
             phase === 'rest' && "bg-cyan-500",
             isPaused && "opacity-10"
           )} />
@@ -405,8 +436,8 @@ export default function SessionPage() {
           className={cn(
             "col-span-3 h-20 text-lg font-bold font-chakra uppercase tracking-widest rounded-2xl flex flex-col items-center justify-center gap-1 transition-all shadow-lg",
             phase === 'ready' || isPaused
-              ? "bg-volt text-zinc-950 hover:bg-volt/90 shadow-glow-volt"
-              : "bg-zinc-900 border border-volt text-volt hover:bg-volt/10"
+              ? "bg-lime-400 text-zinc-950 hover:bg-lime-300 shadow-[0_0_30px_rgba(163,230,53,0.4)]"
+              : "bg-zinc-900 border border-lime-400 text-lime-400 hover:bg-lime-400/10"
           )}
           onClick={togglePause}
         >
