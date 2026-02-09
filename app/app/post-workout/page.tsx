@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, TrendingUp } from "lucide-react";
@@ -13,7 +13,7 @@ const DIFFICULTY_OPTIONS: { value: DifficultyRating; label: string; emoji: strin
   { value: 3, label: "Difícil", emoji: "🔥", color: "bg-danger/20 border-danger text-danger", description: "Quase no meu limite" },
 ];
 
-export default function PostWorkoutPage() {
+function PostWorkoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { actions, currentStageId } = useAppStore();
@@ -303,5 +303,20 @@ export default function PostWorkoutPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function PostWorkoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-carbon">
+        <div className="text-center space-y-4">
+          <div className="text-5xl animate-pulse">💪</div>
+          <p className="text-text-muted">Carregando...</p>
+        </div>
+      </div>
+    }>
+      <PostWorkoutContent />
+    </Suspense>
   );
 }

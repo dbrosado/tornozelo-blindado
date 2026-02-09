@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -17,11 +17,14 @@ export const metadata: Metadata = {
   title: "Tornozelo Blindado",
   description: "Protocolo de reabilitação e fortalecimento de tornozelo.",
   manifest: "/manifest.json",
-  themeColor: "#09090b",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
