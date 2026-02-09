@@ -14,6 +14,7 @@ export interface Exercise {
   duration: number; // in seconds
   type: 'timed' | 'reps' | 'isometric';
   audio?: ExerciseAudio;
+  videoUrl?: string; // Path to demonstration video
 }
 
 export interface WorkoutBlock {

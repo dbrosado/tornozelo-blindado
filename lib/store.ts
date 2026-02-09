@@ -13,6 +13,7 @@ import {
 
 export type ReadinessStatus = 'green' | 'yellow' | 'red' | null;
 export type DifficultyRating = 1 | 2 | 3; // Leve, Moderado, Difícil
+export type AudioMode = 'voice' | 'timer'; // Voice narration or timer only
 
 export interface PostWorkoutRating {
   date: string;
@@ -50,8 +51,12 @@ interface AppState {
     checkInDate: string | null;
   };
   
+  // Audio Mode
+  audioMode: AudioMode;
+  
   // Setters
   setReadiness: (status: ReadinessStatus) => void;
+  setAudioMode: (mode: AudioMode) => void;
   
   // Actions
   actions: {
@@ -89,9 +94,11 @@ export const useAppStore = create<AppState>()(
       lastSession: null,
       postWorkoutRatings: [],
       readiness: { status: null, checkInDate: null },
+      audioMode: 'voice', // Default to voice narration
       
       // Setters
       setReadiness: (status) => set({ readiness: { status, checkInDate: new Date().toISOString() } }),
+      setAudioMode: (mode) => set({ audioMode: mode }),
       
       // Actions
       actions: {
@@ -253,6 +260,7 @@ export const useAppStore = create<AppState>()(
         lastSession: state.lastSession,
         postWorkoutRatings: state.postWorkoutRatings,
         readiness: state.readiness,
+        audioMode: state.audioMode, // Persist audio mode
       })
     }
   )

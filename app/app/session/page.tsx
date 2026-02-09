@@ -3,10 +3,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, ArrowLeft, CheckCircle, Volume2, VolumeX } from "lucide-react";
-import { useAppStore } from "@/lib/store";
+import { Play, Pause, SkipForward, ArrowLeft, CheckCircle, Volume2, VolumeX, Timer, Mic } from "lucide-react";
+import { useAppStore, AudioMode } from "@/lib/store";
 import { LEVELS as WORKOUT_LEVELS } from "@/lib/data/workouts";
 import { getStageById } from "@/lib/data/cultivation-system";
+import { getExerciseVideoUrl } from "@/lib/data/exercise-videos";
 import { speak, stopSpeaking } from "@/lib/tts";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,14 +24,13 @@ const isRestExercise = (exerciseName: string): boolean => {
 
 export default function SessionPage() {
   const router = useRouter();
-  const { currentStageId, actions } = useAppStore();
+  const { currentStageId, audioMode, setAudioMode, actions } = useAppStore();
 
   // State
   const [phase, setPhase] = useState<PlayerPhase>('ready');
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(true);
   const [completedExercises, setCompletedExercises] = useState(0);
 
   // Refs
@@ -38,6 +38,7 @@ export default function SessionPage() {
   const announcedMiddle = useRef(false);
   const announcedEnd = useRef(false);
   const announcedNext = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Data
   const workoutLevel = Math.min(currentStageId, WORKOUT_LEVELS.length);
@@ -48,7 +49,13 @@ export default function SessionPage() {
   const nextExercise = exercises[exerciseIndex + 1];
   const totalExercises = exercises.length;
 
+  // Get video URL for current exercise
+  const videoUrl = currentExercise ? getExerciseVideoUrl(currentExercise.id) : undefined;
+
   const overallProgress = Math.round((exerciseIndex / totalExercises) * 100);
+
+  // Helper to check if voice narration is enabled
+  const isVoiceEnabled = audioMode === 'voice';
 
   const resetAnnouncements = useCallback(() => {
     announcedStart.current = false;
@@ -65,13 +72,13 @@ export default function SessionPage() {
     if (firstIsRest) {
       setPhase('rest');
       setTimeLeft(firstExercise?.duration || 30);
-      if (audioEnabled && firstExercise?.audio?.start) speak(firstExercise.audio.start);
+      if (isVoiceEnabled && firstExercise?.audio?.start) speak(firstExercise.audio.start);
     } else {
       setPhase('prep');
       setTimeLeft(PREP_DURATION);
-      if (audioEnabled && firstExercise) speak(`Preparando. Próximo exercício: ${firstExercise.name}. Você tem 10 segundos.`);
+      if (isVoiceEnabled && firstExercise) speak(`Preparando. Próximo exercício: ${firstExercise.name}. Você tem 10 segundos.`);
     }
-  }, [audioEnabled, exercises, resetAnnouncements]);
+  }, [isVoiceEnabled, exercises, resetAnnouncements]);
 
   const goToNextExercise = useCallback(() => {
     const nextIndex = exerciseIndex + 1;
@@ -79,7 +86,7 @@ export default function SessionPage() {
 
     if (nextIndex >= totalExercises) {
       setPhase('finished');
-      if (audioEnabled) speak("Treino concluído! Parabéns pela dedicação.");
+      if (isVoiceEnabled) speak("Treino concluído! Parabéns pela dedicação.");
       return;
     }
 
@@ -92,14 +99,14 @@ export default function SessionPage() {
     if (nextIsRest) {
       setPhase('rest');
       setTimeLeft(next?.duration || 30);
-      if (audioEnabled && next?.audio?.start) speak(next.audio.start);
-      else if (audioEnabled) speak("Descansa.");
+      if (isVoiceEnabled && next?.audio?.start) speak(next.audio.start);
+      else if (isVoiceEnabled) speak("Descansa.");
     } else {
       setPhase('prep');
       setTimeLeft(PREP_DURATION);
-      if (audioEnabled && next) speak(`Próximo: ${next.name}. Prepare-se.`);
+      if (isVoiceEnabled && next) speak(`Próximo: ${next.name}. Prepare-se.`);
     }
-  }, [exerciseIndex, totalExercises, exercises, audioEnabled, resetAnnouncements]);
+  }, [exerciseIndex, totalExercises, exercises, isVoiceEnabled, resetAnnouncements]);
 
   const skipExercise = useCallback(() => {
     stopSpeaking();
@@ -111,9 +118,29 @@ export default function SessionPage() {
       startWorkout();
     } else if (phase !== 'finished') {
       setIsPaused(prev => !prev);
-      if (audioEnabled && !isPaused) speak("Pausado.");
+      if (isVoiceEnabled && !isPaused) speak("Pausado.");
     }
-  }, [phase, startWorkout, audioEnabled, isPaused]);
+  }, [phase, startWorkout, isVoiceEnabled, isPaused]);
+
+  // Toggle audio mode
+  const toggleAudioMode = () => {
+    const newMode: AudioMode = audioMode === 'voice' ? 'timer' : 'voice';
+    setAudioMode(newMode);
+    if (newMode === 'timer') {
+      stopSpeaking();
+    }
+  };
+
+  // Pause/play video when workout pauses
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPaused || phase === 'ready' || phase === 'finished') {
+        videoRef.current.pause();
+      } else if (phase === 'exercise' || phase === 'prep') {
+        videoRef.current.play().catch(() => {});
+      }
+    }
+  }, [isPaused, phase]);
 
   useEffect(() => {
     if (phase === 'ready' || phase === 'finished' || isPaused) return;
@@ -124,7 +151,7 @@ export default function SessionPage() {
           if (phase === 'prep') {
             setPhase('exercise');
             announcedStart.current = false;
-            if (audioEnabled) speak("Começa!");
+            if (isVoiceEnabled) speak("Começa!");
             return currentExercise?.duration || 30;
           }
           if (phase === 'exercise' || phase === 'rest') {
@@ -134,33 +161,33 @@ export default function SessionPage() {
           return 0;
         }
 
-        if (phase === 'prep' && prev === 4 && audioEnabled) speak("3, 2, 1, Vai!");
+        if (phase === 'prep' && prev === 4 && isVoiceEnabled) speak("3, 2, 1, Vai!");
 
         if (phase === 'exercise' && currentExercise) {
           const duration = currentExercise.duration;
           if (!announcedStart.current && prev >= duration - 1) {
             announcedStart.current = true;
-            if (audioEnabled && currentExercise.audio?.start) speak(currentExercise.audio.start);
+            if (isVoiceEnabled && currentExercise.audio?.start) speak(currentExercise.audio.start);
           }
           
           const midPoint = Math.floor(duration / 2);
           if (!announcedMiddle.current && prev <= midPoint && prev > midPoint - 2) {
             announcedMiddle.current = true;
-            if (audioEnabled && currentExercise.audio?.middle) speak(currentExercise.audio.middle);
+            if (isVoiceEnabled && currentExercise.audio?.middle) speak(currentExercise.audio.middle);
           }
 
-          if (!announcedNext.current && prev === 8 && nextExercise && audioEnabled) {
+          if (!announcedNext.current && prev === 8 && nextExercise && isVoiceEnabled) {
             announcedNext.current = true;
             if (!isRestExercise(nextExercise.name)) speak(`Próximo: ${nextExercise.name}.`);
           }
 
           if (!announcedEnd.current && prev === 5) {
             announcedEnd.current = true;
-            if (audioEnabled && currentExercise.audio?.end) speak(currentExercise.audio.end);
+            if (isVoiceEnabled && currentExercise.audio?.end) speak(currentExercise.audio.end);
           }
         }
 
-        if (phase === 'rest' && prev === 5 && audioEnabled && currentExercise?.audio?.end) {
+        if (phase === 'rest' && prev === 5 && isVoiceEnabled && currentExercise?.audio?.end) {
           speak(currentExercise.audio.end);
         }
 
@@ -169,7 +196,7 @@ export default function SessionPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [phase, isPaused, currentExercise, nextExercise, audioEnabled, goToNextExercise]);
+  }, [phase, isPaused, currentExercise, nextExercise, isVoiceEnabled, goToNextExercise]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -182,7 +209,7 @@ export default function SessionPage() {
     router.push(`/app/post-workout?completed=${completedExercises}&total=${totalExercises}`);
   };
 
-  // FINISHED SCREEN (Obsidian Style)
+  // FINISHED SCREEN
   if (phase === 'finished') {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-8 min-h-[80vh] px-6 animate-in zoom-in duration-500 bg-zinc-950">
@@ -236,7 +263,7 @@ export default function SessionPage() {
       </div>
 
       {/* Header */}
-      <div className="space-y-6 z-10 px-4 pt-2">
+      <div className="space-y-4 z-10 px-4 pt-2">
         <div className="flex justify-between items-center">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-white/5 text-zinc-400">
             <ArrowLeft className="h-6 w-6" />
@@ -249,12 +276,35 @@ export default function SessionPage() {
               {styles.label}
             </span>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setAudioEnabled(!audioEnabled)} className="hover:bg-white/5">
-            {audioEnabled ? <Volume2 className="h-6 w-6 text-volt" /> : <VolumeX className="h-6 w-6 text-zinc-500" />}
+          {/* Audio Mode Toggle */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleAudioMode} 
+            className="hover:bg-white/5"
+            title={audioMode === 'voice' ? 'Voz Narrando' : 'Apenas Timer'}
+          >
+            {audioMode === 'voice' ? (
+              <Mic className="h-6 w-6 text-volt" />
+            ) : (
+              <Timer className="h-6 w-6 text-amber-400" />
+            )}
           </Button>
         </div>
 
-        {/* Neural Progress Bar */}
+        {/* Audio Mode Indicator */}
+        <div className="flex justify-center">
+          <div className={cn(
+            "text-[9px] uppercase tracking-widest px-3 py-1 rounded-full border",
+            audioMode === 'voice' 
+              ? "bg-volt/10 border-volt/30 text-volt" 
+              : "bg-amber-400/10 border-amber-400/30 text-amber-400"
+          )}>
+            {audioMode === 'voice' ? '🎙️ Voz Narrando' : '⏱️ Apenas Timer'}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-[10px] text-zinc-500 uppercase tracking-widest font-mono">
             <span>Ex {exerciseIndex + 1}/{totalExercises}</span>
@@ -272,7 +322,7 @@ export default function SessionPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 px-6 z-10">
+      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 px-6 z-10">
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -282,11 +332,27 @@ export default function SessionPage() {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4 w-full"
           >
-            <h2 className="text-2xl sm:text-3xl font-black font-chakra leading-tight text-white tracking-tight uppercase drop-shadow-lg">
+            <h2 className="text-xl sm:text-2xl font-black font-chakra leading-tight text-white tracking-tight uppercase drop-shadow-lg">
               {currentExercise?.name || 'Carregando...'}
             </h2>
 
-            {phase !== 'ready' && currentExercise && (
+            {/* Video Player */}
+            {videoUrl && phase !== 'ready' && !isRestExercise(currentExercise?.name || '') && (
+              <div className="relative w-full max-w-[280px] mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-glass bg-zinc-900/50">
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  loop
+                  muted
+                  playsInline
+                  className="w-full aspect-[9/16] object-cover"
+                  autoPlay={phase === 'exercise' || phase === 'prep'}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/50 to-transparent pointer-events-none" />
+              </div>
+            )}
+
+            {phase !== 'ready' && currentExercise && !videoUrl && (
               <div className={cn(
                 "p-4 rounded-2xl backdrop-blur-md border border-white/5 max-w-sm mx-auto shadow-glass",
                 phase === 'rest' ? "bg-cyan-950/30" : "bg-zinc-900/60"
@@ -300,7 +366,7 @@ export default function SessionPage() {
         </AnimatePresence>
 
         {/* The Core Timer */}
-        <div className="relative py-8">
+        <div className="relative py-4">
           <div className={cn(
             "absolute inset-0 blur-[60px] rounded-full transition-all duration-700 opacity-40",
             phase === 'prep' && "bg-amber-500",
@@ -313,7 +379,7 @@ export default function SessionPage() {
             animate={{ scale: phase === 'exercise' ? [1, 1.02, 1] : 1 }}
             transition={{ repeat: Infinity, duration: 2 }}
             className={cn(
-              "relative text-[7rem] sm:text-[8.5rem] font-black font-mono tracking-tighter leading-none select-none transition-colors duration-300 drop-shadow-2xl",
+              "relative text-[5rem] sm:text-[6rem] font-black font-mono tracking-tighter leading-none select-none transition-colors duration-300 drop-shadow-2xl",
               styles.text,
               timeLeft <= 10 && phase === 'exercise' && "text-red-500 animate-pulse"
             )}
@@ -322,7 +388,7 @@ export default function SessionPage() {
           </motion.div>
         </div>
 
-        {/* Phase Indicators */}
+        {/* Next Exercise Preview */}
         {nextExercise && phase !== 'ready' && !isRestExercise(nextExercise.name) && (
           <div className="bg-zinc-900/80 border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 backdrop-blur-sm">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Próximo</span>
