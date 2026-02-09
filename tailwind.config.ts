@@ -53,6 +53,17 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Obsidian & Volt Colors
+        volt: {
+          DEFAULT: "#a3e635",
+          glow: "rgba(163, 230, 53, 0.5)",
+          dim: "rgba(163, 230, 53, 0.1)"
+        },
+        gold: {
+          DEFAULT: "#fbbf24",
+          glow: "rgba(251, 191, 36, 0.5)",
+          dim: "rgba(251, 191, 36, 0.1)"
+        },
         carbon: {
           DEFAULT: "#09090b",
           100: "#f4f4f5",
@@ -92,6 +103,11 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'glow-volt': '0 0 20px -5px rgba(163, 230, 53, 0.4)',
+        'glow-gold': '0 0 20px -5px rgba(251, 191, 36, 0.4)',
+        'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -106,11 +122,6 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-      fontFamily: {
-        sans: ['var(--font-inter)'],
-        mono: ['var(--font-roboto-mono)'],
-        chakra: ['var(--font-chakra-petch)']
-      }
     },
   },
   plugins: [tailwindcssAnimate],
