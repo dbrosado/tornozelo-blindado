@@ -40,54 +40,20 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-
-  --color-carbon: var(--carbon);
-  --color-grid: var(--grid);
-  --color-blueprint: var(--blueprint);
-  --color-warning: var(--warning);
-  --color-danger: var(--danger);
-  --color-text-main: var(--text-main);
-  --color-text-muted: var(--text-muted);
-
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
 }
 
 :root {
-  /* Core Palette - Industrial Blueprint Dark Mode */
-  --background: #09090b; /* Zinc 950 - Deep Carbon */
+  /* Obsidian & Volt Palette */
+  --background: #09090b; /* Zinc 950 */
   --foreground: #fafafa; /* Zinc 50 */
-  
+
   --card: #09090b;
   --card-foreground: #fafafa;
   
   --popover: #09090b;
   --popover-foreground: #fafafa;
   
-  --primary: #10b981; /* Emerald 500 - Valid/Go Signal */
+  --primary: #a3e635; /* Volt / Lime 400 */
   --primary-foreground: #09090b;
   
   --secondary: #27272a; /* Zinc 800 */
@@ -97,25 +63,16 @@
   --muted-foreground: #a1a1aa; /* Zinc 400 */
   
   --accent: #27272a;
-  --accent-foreground: #fafafa;
+  --accent-foreground: #a3e635;
   
   --destructive: #ef4444; /* Red 500 */
   --destructive-foreground: #fafafa;
-
+  
   --border: #27272a;
   --input: #27272a;
-  --ring: #10b981;
+  --ring: #a3e635; /* Volt ring */
 
   --radius: 0.5rem;
-  
-  /* Custom Semantic Colors */
-  --carbon: #09090b;
-  --grid: #3f3f46; /* Zinc 700 - Technical Lines */
-  --blueprint: #1e3a8a; /* Blue 900 - Subtle technical feel */
-  --warning: #f59e0b; /* Amber 500 */
-  --danger: #ef4444; /* Red 500 */
-  --text-main: #fafafa;
-  --text-muted: #a1a1aa;
 }
 
 body {
@@ -126,25 +83,32 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Technical/Grid Background Pattern */
-.bg-tech-grid {
-  background-size: 40px 40px;
-  background-image:
-    linear-gradient(to right, rgba(63, 63, 70, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(63, 63, 70, 0.1) 1px, transparent 1px);
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(9, 9, 11, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Blueprint Scanline Animation */
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+.glass-card {
+  background: rgba(24, 24, 27, 0.6); /* Zinc 900 / 60% */
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.scanline::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 49%, rgba(16, 185, 129, 0.05) 50%, transparent 51%);
-  animation: scanline 4s linear infinite;
-  pointer-events: none;
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b; 
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; 
 }

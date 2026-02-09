@@ -9,10 +9,11 @@ import { LEVELS as WORKOUT_LEVELS } from "@/lib/data/workouts";
 import { getStageById } from "@/lib/data/cultivation-system";
 import { speak, stopSpeaking } from "@/lib/tts";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 type PlayerPhase = 'ready' | 'prep' | 'exercise' | 'rest' | 'finished';
 
-const PREP_DURATION = 10; // 10 seconds to get ready before each exercise
+const PREP_DURATION = 10;
 
 // Check if exercise is a rest period
 const isRestExercise = (exerciseName: string): boolean => {
@@ -32,13 +33,13 @@ export default function SessionPage() {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [completedExercises, setCompletedExercises] = useState(0);
 
-  // Refs to track announcements
+  // Refs
   const announcedStart = useRef(false);
   const announcedMiddle = useRef(false);
   const announcedEnd = useRef(false);
   const announcedNext = useRef(false);
 
-  // Get workout data - map stage to workout level
+  // Data
   const workoutLevel = Math.min(currentStageId, WORKOUT_LEVELS.length);
   const currentWorkout = WORKOUT_LEVELS.find(l => l.id === workoutLevel) || WORKOUT_LEVELS[0];
   const stageInfo = getStageById(currentStageId);
@@ -47,10 +48,8 @@ export default function SessionPage() {
   const nextExercise = exercises[exerciseIndex + 1];
   const totalExercises = exercises.length;
 
-  // Progress calculation
   const overallProgress = Math.round((exerciseIndex / totalExercises) * 100);
 
-  // Reset announcement flags
   const resetAnnouncements = useCallback(() => {
     announcedStart.current = false;
     announcedMiddle.current = false;
@@ -58,46 +57,32 @@ export default function SessionPage() {
     announcedNext.current = false;
   }, []);
 
-  // Start Workout - User clicks Play
   const startWorkout = useCallback(() => {
     resetAnnouncements();
-
-    // Check if first exercise is a rest (unlikely but handle it)
     const firstExercise = exercises[0];
     const firstIsRest = firstExercise ? isRestExercise(firstExercise.name) : false;
 
     if (firstIsRest) {
-      // Start rest immediately
       setPhase('rest');
       setTimeLeft(firstExercise?.duration || 30);
-      if (audioEnabled && firstExercise?.audio?.start) {
-        speak(firstExercise.audio.start);
-      }
+      if (audioEnabled && firstExercise?.audio?.start) speak(firstExercise.audio.start);
     } else {
-      // Normal exercise - show prep countdown
       setPhase('prep');
       setTimeLeft(PREP_DURATION);
-      if (audioEnabled && firstExercise) {
-        speak(`Preparando. Próximo exercício: ${firstExercise.name}. Você tem 10 segundos.`);
-      }
+      if (audioEnabled && firstExercise) speak(`Preparando. Próximo exercício: ${firstExercise.name}. Você tem 10 segundos.`);
     }
   }, [audioEnabled, exercises, resetAnnouncements]);
 
-  // Move to next exercise
   const goToNextExercise = useCallback(() => {
     const nextIndex = exerciseIndex + 1;
     setCompletedExercises(prev => prev + 1);
 
     if (nextIndex >= totalExercises) {
-      // Workout complete!
       setPhase('finished');
-      if (audioEnabled) {
-        speak("Treino concluído! Parabéns pela dedicação.");
-      }
+      if (audioEnabled) speak("Treino concluído! Parabéns pela dedicação.");
       return;
     }
 
-    // Get next exercise info
     const next = exercises[nextIndex];
     const nextIsRest = next ? isRestExercise(next.name) : false;
 
@@ -105,120 +90,76 @@ export default function SessionPage() {
     resetAnnouncements();
 
     if (nextIsRest) {
-      // REST: Start immediately without prep countdown
       setPhase('rest');
       setTimeLeft(next?.duration || 30);
-      if (audioEnabled && next?.audio?.start) {
-        speak(next.audio.start);
-      } else if (audioEnabled) {
-        speak("Descansa.");
-      }
+      if (audioEnabled && next?.audio?.start) speak(next.audio.start);
+      else if (audioEnabled) speak("Descansa.");
     } else {
-      // EXERCISE: Show 10-second prep countdown
       setPhase('prep');
       setTimeLeft(PREP_DURATION);
-      if (audioEnabled && next) {
-        speak(`Próximo: ${next.name}. Prepare-se.`);
-      }
+      if (audioEnabled && next) speak(`Próximo: ${next.name}. Prepare-se.`);
     }
   }, [exerciseIndex, totalExercises, exercises, audioEnabled, resetAnnouncements]);
 
-  // Skip current exercise
   const skipExercise = useCallback(() => {
     stopSpeaking();
     goToNextExercise();
   }, [goToNextExercise]);
 
-  // Toggle Pause
   const togglePause = useCallback(() => {
     if (phase === 'ready') {
       startWorkout();
     } else if (phase !== 'finished') {
       setIsPaused(prev => !prev);
-      if (audioEnabled && !isPaused) {
-        speak("Pausado.");
-      }
+      if (audioEnabled && !isPaused) speak("Pausado.");
     }
   }, [phase, startWorkout, audioEnabled, isPaused]);
 
-  // Main Timer Effect
   useEffect(() => {
-    // Don't run timer if not in active phase or paused
-    if (phase === 'ready' || phase === 'finished' || isPaused) {
-      return;
-    }
+    if (phase === 'ready' || phase === 'finished' || isPaused) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        // Time's up
         if (prev <= 1) {
-          // PREP phase ended -> Start EXERCISE
           if (phase === 'prep') {
             setPhase('exercise');
             announcedStart.current = false;
-
-            if (audioEnabled) {
-              speak("Começa!");
-            }
-
-            // Return exercise duration
+            if (audioEnabled) speak("Começa!");
             return currentExercise?.duration || 30;
           }
-
-          // EXERCISE or REST phase ended -> Go to next
           if (phase === 'exercise' || phase === 'rest') {
             goToNextExercise();
             return 0;
           }
-
           return 0;
         }
 
-        // During PREP phase - countdown announcement
-        if (phase === 'prep' && prev === 4 && audioEnabled) {
-          speak("3, 2, 1, Vai!");
-        }
+        if (phase === 'prep' && prev === 4 && audioEnabled) speak("3, 2, 1, Vai!");
 
-        // During EXERCISE phase - audio cues
         if (phase === 'exercise' && currentExercise) {
           const duration = currentExercise.duration;
-
-          // Start cue (at the beginning)
           if (!announcedStart.current && prev >= duration - 1) {
             announcedStart.current = true;
-            if (audioEnabled && currentExercise.audio?.start) {
-              speak(currentExercise.audio.start);
-            }
+            if (audioEnabled && currentExercise.audio?.start) speak(currentExercise.audio.start);
           }
-
-          // Middle cue (halfway through)
+          
           const midPoint = Math.floor(duration / 2);
           if (!announcedMiddle.current && prev <= midPoint && prev > midPoint - 2) {
             announcedMiddle.current = true;
-            if (audioEnabled && currentExercise.audio?.middle) {
-              speak(currentExercise.audio.middle);
-            }
+            if (audioEnabled && currentExercise.audio?.middle) speak(currentExercise.audio.middle);
           }
 
-          // Announce next exercise 8 seconds before end
           if (!announcedNext.current && prev === 8 && nextExercise && audioEnabled) {
             announcedNext.current = true;
-            // Don't announce "next" if it's just a rest
-            if (!isRestExercise(nextExercise.name)) {
-              speak(`Próximo: ${nextExercise.name}.`);
-            }
+            if (!isRestExercise(nextExercise.name)) speak(`Próximo: ${nextExercise.name}.`);
           }
 
-          // End cue (last 5 seconds)
           if (!announcedEnd.current && prev === 5) {
             announcedEnd.current = true;
-            if (audioEnabled && currentExercise.audio?.end) {
-              speak(currentExercise.audio.end);
-            }
+            if (audioEnabled && currentExercise.audio?.end) speak(currentExercise.audio.end);
           }
         }
 
-        // During REST phase - announce when ending
         if (phase === 'rest' && prev === 5 && audioEnabled && currentExercise?.audio?.end) {
           speak(currentExercise.audio.end);
         }
@@ -230,216 +171,206 @@ export default function SessionPage() {
     return () => clearInterval(timer);
   }, [phase, isPaused, currentExercise, nextExercise, audioEnabled, goToNextExercise]);
 
-  // Format time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Finish and go to post-workout questionnaire
   const handleFinish = () => {
     actions.completeSession();
     router.push(`/app/post-workout?completed=${completedExercises}&total=${totalExercises}`);
   };
 
-  // FINISHED SCREEN
+  // FINISHED SCREEN (Obsidian Style)
   if (phase === 'finished') {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-8 min-h-[80vh] px-6 animate-in zoom-in duration-500">
-        <div className="text-primary mb-4 p-6 bg-primary/10 rounded-full border border-primary/20 animate-pulse">
-          <CheckCircle className="h-24 w-24" />
+      <div className="h-full flex flex-col items-center justify-center space-y-8 min-h-[80vh] px-6 animate-in zoom-in duration-500 bg-zinc-950">
+        <div className="relative">
+          <div className="absolute inset-0 bg-volt/20 blur-3xl rounded-full" />
+          <div className="relative text-volt mb-4 p-8 bg-zinc-900 rounded-full border border-volt/30 shadow-glow-volt animate-pulse">
+            <CheckCircle className="h-24 w-24" />
+          </div>
         </div>
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-black font-chakra uppercase text-white tracking-widest leading-none">
-            TREINO CONCLUÍDO
+          <h1 className="text-4xl font-black font-chakra uppercase text-white tracking-widest leading-none">
+            TREINO<br/>CONCLUÍDO
           </h1>
-          <p className="text-sm text-text-muted font-mono uppercase tracking-widest">
+          <p className="text-sm text-zinc-400 font-mono uppercase tracking-widest">
             {completedExercises} de {totalExercises} exercícios
           </p>
         </div>
-        <Button
-          size="lg"
-          className="w-full max-w-xs h-16 text-xl bg-primary hover:bg-primary/90 text-carbon font-bold uppercase tracking-wider shadow-lg shadow-primary/20"
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          className="w-full max-w-xs h-16 text-xl bg-volt text-zinc-950 font-bold uppercase tracking-wider shadow-glow-volt rounded-xl"
           onClick={handleFinish}
         >
           Avaliar Treino
-        </Button>
+        </motion.button>
       </div>
     );
   }
 
-  // Get phase display info
-  const getPhaseDisplay = () => {
+  const getPhaseStyles = () => {
     switch (phase) {
-      case 'ready':
-        return { label: 'PRONTO PARA COMEÇAR', color: 'text-text-muted', timerColor: 'text-text-muted' };
-      case 'prep':
-        return { label: 'PREPARE-SE', color: 'text-warning', timerColor: 'text-warning' };
-      case 'exercise':
-        return { label: 'EM EXECUÇÃO', color: 'text-primary', timerColor: timeLeft <= 10 ? 'text-danger' : 'text-white' };
-      case 'rest':
-        return { label: 'DESCANSANDO', color: 'text-cyan-400', timerColor: 'text-cyan-400' };
-      default:
-        return { label: '', color: '', timerColor: '' };
+      case 'ready': return { label: 'PRONTO', text: 'text-zinc-500', glow: '' };
+      case 'prep': return { label: 'PREPARAR', text: 'text-amber-400', glow: 'shadow-[0_0_30px_rgba(251,191,36,0.2)]' };
+      case 'exercise': return { label: 'GO', text: 'text-volt', glow: 'shadow-[0_0_40px_rgba(163,230,53,0.3)]' };
+      case 'rest': return { label: 'DESCANSO', text: 'text-cyan-400', glow: 'shadow-[0_0_30px_rgba(34,211,238,0.2)]' };
+      default: return { label: '', text: '', glow: '' };
     }
   };
 
-  const phaseDisplay = getPhaseDisplay();
+  const styles = getPhaseStyles();
 
   return (
-    <div className="h-full flex flex-col justify-between py-4 min-h-[90vh] max-w-md mx-auto relative bg-carbon overflow-hidden">
-
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-grid opacity-[0.03] pointer-events-none z-0" />
-      <div className={cn(
-        "absolute inset-0 transition-colors duration-500 pointer-events-none z-0",
-        phase === 'prep' && "bg-warning/5",
-        phase === 'exercise' && "bg-primary/5",
-        phase === 'rest' && "bg-cyan-500/5"
-      )} />
+    <div className="h-full flex flex-col justify-between py-4 min-h-[90vh] max-w-md mx-auto relative bg-zinc-950 overflow-hidden">
+      
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/50 via-zinc-950 to-zinc-950" />
+        <motion.div 
+          animate={{ opacity: phase === 'exercise' ? 0.1 : 0 }}
+          className="absolute inset-0 bg-volt mix-blend-overlay"
+        />
+      </div>
 
       {/* Header */}
-      <div className="space-y-4 z-10 px-4">
+      <div className="space-y-6 z-10 px-4 pt-2">
         <div className="flex justify-between items-center">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-grid/20">
-            <ArrowLeft className="h-6 w-6 text-text-muted" />
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-white/5 text-zinc-400">
+            <ArrowLeft className="h-6 w-6" />
           </Button>
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
+            <span className="text-[10px] font-bold text-volt uppercase tracking-[0.2em]">
               {stageInfo.emoji} {currentWorkout.title}
             </span>
-            <span className={cn("text-xs font-bold uppercase tracking-widest", phaseDisplay.color)}>
-              {phaseDisplay.label}
+            <span className={cn("text-xs font-bold uppercase tracking-widest", styles.text)}>
+              {styles.label}
             </span>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setAudioEnabled(!audioEnabled)} className="hover:bg-grid/20">
-            {audioEnabled ? <Volume2 className="h-6 w-6 text-primary" /> : <VolumeX className="h-6 w-6 text-text-muted" />}
+          <Button variant="ghost" size="icon" onClick={() => setAudioEnabled(!audioEnabled)} className="hover:bg-white/5">
+            {audioEnabled ? <Volume2 className="h-6 w-6 text-volt" /> : <VolumeX className="h-6 w-6 text-zinc-500" />}
           </Button>
         </div>
 
-        {/* Progress Bar */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-[10px] text-text-muted uppercase tracking-widest">
-            <span>Exercício {exerciseIndex + 1}/{totalExercises}</span>
+        {/* Neural Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-[10px] text-zinc-500 uppercase tracking-widest font-mono">
+            <span>Ex {exerciseIndex + 1}/{totalExercises}</span>
             <span>{overallProgress}%</span>
           </div>
-          <div className="w-full bg-grid/30 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-primary h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-              style={{ width: `${overallProgress}%` }}
+          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-white/5">
+            <motion.div
+              className="h-full bg-volt shadow-[0_0_10px_rgba(163,230,53,0.5)]"
+              initial={{ width: 0 }}
+              animate={{ width: `${overallProgress}%` }}
+              transition={{ duration: 0.5 }}
             />
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 px-6 z-10">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 px-6 z-10">
+        
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${exerciseIndex}-${phase}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-4 w-full"
+          >
+            <h2 className="text-2xl sm:text-3xl font-black font-chakra leading-tight text-white tracking-tight uppercase drop-shadow-lg">
+              {currentExercise?.name || 'Carregando...'}
+            </h2>
 
-        {/* Current Exercise Info */}
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500" key={`${exerciseIndex}-${phase}`}>
-          <h2 className="text-2xl sm:text-3xl font-black font-chakra leading-tight text-white tracking-tight uppercase">
-            {currentExercise?.name || 'Carregando...'}
-          </h2>
+            {phase !== 'ready' && currentExercise && (
+              <div className={cn(
+                "p-4 rounded-2xl backdrop-blur-md border border-white/5 max-w-sm mx-auto shadow-glass",
+                phase === 'rest' ? "bg-cyan-950/30" : "bg-zinc-900/60"
+              )}>
+                <p className="text-sm text-zinc-300 leading-relaxed font-medium">
+                  {currentExercise.instructions}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
-          {phase !== 'ready' && currentExercise && (
-            <div className={cn(
-              "border p-4 rounded-xl backdrop-blur-sm max-w-sm mx-auto",
-              phase === 'rest' ? "bg-cyan-500/10 border-cyan-500/30" : "bg-blueprint/30 border-grid/50"
-            )}>
-              <p className="text-base text-text-muted leading-relaxed">
-                {currentExercise.instructions}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Big Timer */}
-        <div className="relative my-4">
-          {/* Glow Effect */}
+        {/* The Core Timer */}
+        <div className="relative py-8">
           <div className={cn(
-            "absolute inset-0 blur-3xl rounded-full transition-all duration-500",
-            phase === 'prep' && "bg-warning/30",
-            phase === 'exercise' && (timeLeft <= 10 ? "bg-danger/30" : "bg-primary/20"),
-            phase === 'rest' && "bg-cyan-500/30",
-            isPaused && "opacity-30"
+            "absolute inset-0 blur-[60px] rounded-full transition-all duration-700 opacity-40",
+            phase === 'prep' && "bg-amber-500",
+            phase === 'exercise' && (timeLeft <= 10 ? "bg-red-500" : "bg-volt"),
+            phase === 'rest' && "bg-cyan-500",
+            isPaused && "opacity-10"
           )} />
-
-          <div className={cn(
-            "relative text-[7rem] sm:text-[8rem] font-black font-chakra tabular-nums tracking-tighter leading-none select-none transition-colors duration-300",
-            phaseDisplay.timerColor,
-            timeLeft <= 10 && phase === 'exercise' && "animate-pulse"
-          )}>
-            {phase === 'ready' ? '--:--' : formatTime(timeLeft)}
-          </div>
+          
+          <motion.div 
+            animate={{ scale: phase === 'exercise' ? [1, 1.02, 1] : 1 }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className={cn(
+              "relative text-[7rem] sm:text-[8.5rem] font-black font-mono tracking-tighter leading-none select-none transition-colors duration-300 drop-shadow-2xl",
+              styles.text,
+              timeLeft <= 10 && phase === 'exercise' && "text-red-500 animate-pulse"
+            )}
+          >
+            {phase === 'ready' ? '00:00' : formatTime(timeLeft)}
+          </motion.div>
         </div>
 
-        {/* Next Exercise Preview */}
+        {/* Phase Indicators */}
         {nextExercise && phase !== 'ready' && !isRestExercise(nextExercise.name) && (
-          <div className="bg-grid/20 border border-grid/30 rounded-lg px-4 py-2 flex items-center gap-2">
-            <span className="text-xs text-text-muted uppercase tracking-wider">Próximo:</span>
-            <span className="text-xs font-bold text-white">{nextExercise.name}</span>
-          </div>
-        )}
-
-        {/* Phase indicator for exercise */}
-        {phase === 'exercise' && currentExercise && (
-          <div className="text-[10px] text-text-muted uppercase tracking-widest">
-            {currentExercise.type === 'isometric' ? '💪 Isometria - Segure firme!' : currentExercise.type === 'reps' ? '🔄 Repetições' : '⏱️ Tempo'}
-          </div>
-        )}
-
-        {/* Rest indicator */}
-        {phase === 'rest' && (
-          <div className="text-[10px] text-cyan-400 uppercase tracking-widest">
-            😮‍💨 Respire fundo! Recupere as forças.
+          <div className="bg-zinc-900/80 border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 backdrop-blur-sm">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Próximo</span>
+            <div className="h-3 w-[1px] bg-zinc-700" />
+            <span className="text-xs font-bold text-zinc-200">{nextExercise.name}</span>
           </div>
         )}
       </div>
 
-      {/* Controls */}
-      <div className="grid grid-cols-5 gap-3 px-4 pb-6 z-10 items-end">
-
-        {/* Play/Pause Button */}
-        <Button
+      {/* Control Deck */}
+      <div className="grid grid-cols-5 gap-4 px-4 pb-8 z-10 items-end">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           className={cn(
-            "col-span-3 h-20 text-lg font-bold font-chakra uppercase tracking-widest rounded-2xl flex flex-col gap-1 shadow-xl transition-all active:scale-[0.98]",
-            phase === 'ready'
-              ? "bg-primary text-carbon hover:bg-primary/90"
-              : isPaused
-                ? "bg-primary text-carbon hover:bg-primary/90"
-                : "bg-carbon border-2 border-primary text-primary hover:bg-primary/10"
+            "col-span-3 h-20 text-lg font-bold font-chakra uppercase tracking-widest rounded-2xl flex flex-col items-center justify-center gap-1 transition-all shadow-lg",
+            phase === 'ready' || isPaused
+              ? "bg-volt text-zinc-950 hover:bg-volt/90 shadow-glow-volt"
+              : "bg-zinc-900 border border-volt text-volt hover:bg-volt/10"
           )}
           onClick={togglePause}
         >
           {phase === 'ready' ? (
             <>
-              <Play className="h-8 w-8 fill-current" />
-              <span className="text-sm">INICIAR</span>
+              <Play className="h-6 w-6 fill-current" />
+              <span className="text-xs">INICIAR</span>
             </>
           ) : isPaused ? (
             <>
-              <Play className="h-8 w-8 fill-current" />
-              <span className="text-sm">CONTINUAR</span>
+              <Play className="h-6 w-6 fill-current" />
+              <span className="text-xs">RETOMAR</span>
             </>
           ) : (
             <>
-              <Pause className="h-8 w-8" />
-              <span className="text-sm">PAUSAR</span>
+              <Pause className="h-6 w-6" />
+              <span className="text-xs">PAUSAR</span>
             </>
           )}
-        </Button>
+        </motion.button>
 
-        {/* Skip Button */}
-        <Button
-          variant="outline"
-          className="col-span-2 h-20 text-base font-bold font-chakra uppercase tracking-widest rounded-2xl flex flex-col gap-1 border-grid bg-blueprint/20 hover:bg-grid/30 hover:text-white transition-colors disabled:opacity-30"
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          className="col-span-2 h-20 text-base font-bold font-chakra uppercase tracking-widest rounded-2xl flex flex-col items-center justify-center gap-1 border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400 transition-colors disabled:opacity-30 backdrop-blur-md"
           onClick={skipExercise}
           disabled={phase === 'ready'}
         >
-          <SkipForward className="h-7 w-7" />
-          <span className="text-sm">PULAR</span>
-        </Button>
+          <SkipForward className="h-6 w-6" />
+          <span className="text-xs">PULAR</span>
+        </motion.button>
       </div>
     </div>
   );

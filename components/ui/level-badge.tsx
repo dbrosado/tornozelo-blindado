@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { LevelInfo } from "@/lib/data/levels";
+import { motion } from "framer-motion";
 
 interface LevelBadgeProps {
   level: LevelInfo;
@@ -23,11 +24,19 @@ export function LevelBadge({ level, size = "md", showName = true, className }: L
     lg: "text-2xl"
   };
 
+  // Border color based on level rarity/color
+  const borderColor = level.id === 5 ? "border-gold/50" : "border-white/10";
+  const glowClass = level.id === 5 ? "shadow-glow-gold" : "";
+
   return (
-    <div
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
       className={cn(
         "inline-flex items-center gap-2 rounded-full font-chakra font-bold uppercase tracking-wider",
-        "bg-carbon/80 border border-grid/50 backdrop-blur-sm",
+        "bg-zinc-900/80 backdrop-blur-md border",
+        borderColor,
+        glowClass,
         sizeClasses[size],
         level.color,
         className
@@ -35,7 +44,7 @@ export function LevelBadge({ level, size = "md", showName = true, className }: L
     >
       <span className={emojiSize[size]}>{level.emoji}</span>
       {showName && <span>{level.name}</span>}
-    </div>
+    </motion.div>
   );
 }
 
@@ -43,7 +52,7 @@ interface LevelProgressBarProps {
   currentLevel: LevelInfo;
   nextLevel: LevelInfo | null;
   progressPercent: number;
-  daysToNext: number;
+  daysToNext?: number;
   className?: string;
 }
 
@@ -51,50 +60,58 @@ export function LevelProgressBar({
   currentLevel,
   nextLevel,
   progressPercent,
-  daysToNext,
+  daysToNext = 0,
   className
 }: LevelProgressBarProps) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Level Labels */}
       <div className="flex justify-between items-center text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className={cn("font-bold", currentLevel.color)}>{currentLevel.emoji} {currentLevel.name}</span>
+        <div className="flex items-center gap-2">
+          <span className={cn("font-bold font-chakra uppercase", currentLevel.color)}>
+             {currentLevel.name}
+          </span>
+          <span className="text-xs">{currentLevel.emoji}</span>
         </div>
         {nextLevel && (
-          <div className="flex items-center gap-1.5 text-text-muted">
-            <span>{nextLevel.emoji} {nextLevel.name}</span>
+          <div className="flex items-center gap-2 text-zinc-500">
+             <span className="font-chakra uppercase">{nextLevel.name}</span>
+             <span className="opacity-50">{nextLevel.emoji}</span>
           </div>
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="relative h-3 bg-grid/30 rounded-full overflow-hidden">
-        <div
+      {/* Progress Bar Container */}
+      <div className="relative h-2 bg-zinc-900/50 rounded-full overflow-hidden border border-white/5">
+        {/* Animated Fill */}
+        <motion.div
           className={cn(
-            "absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out",
-            "bg-gradient-to-r from-primary/80 to-primary",
-            "shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+            "absolute inset-y-0 left-0 rounded-full",
+            "bg-gradient-to-r from-volt-dim to-volt",
+            "shadow-[0_0_15px_rgba(163,230,53,0.4)]"
           )}
-          style={{ width: `${progressPercent}%` }}
-        />
-        {/* Glow Effect */}
-        <div
-          className="absolute inset-y-0 left-0 rounded-full bg-primary/30 blur-sm"
-          style={{ width: `${progressPercent}%` }}
+          initial={{ width: 0 }}
+          animate={{ width: `${progressPercent}%` }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
         />
       </div>
 
       {/* Days Left */}
       {nextLevel && daysToNext > 0 && (
-        <p className="text-[10px] text-text-muted text-center uppercase tracking-widest">
-          {daysToNext} dias para {nextLevel.name}
-        </p>
+        <div className="flex justify-end">
+          <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-mono">
+            <span className="text-volt font-bold">{daysToNext}</span> dias restantes
+          </p>
+        </div>
       )}
       {!nextLevel && (
-        <p className="text-[10px] text-primary text-center uppercase tracking-widest font-bold">
+        <motion.p 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-[10px] text-gold text-center uppercase tracking-widest font-bold font-chakra shadow-glow-gold"
+        >
           Nível Máximo Alcançado! 🏆
-        </p>
+        </motion.p>
       )}
     </div>
   );
