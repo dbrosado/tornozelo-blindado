@@ -18,8 +18,8 @@ function RangeInput({ value, onChange, label, max = 10 }: RangeInputProps) {
   return (
     <div className="space-y-6 py-4">
       <div className="flex justify-between items-end">
-        <label className="text-sm font-bold uppercase tracking-widest text-text-muted">{label}</label>
-        <span className="text-4xl font-black font-chakra text-primary">{value}</span>
+        <label className="text-sm font-semibold font-heading uppercase tracking-widest text-[#A3A3A3]">{label}</label>
+        <span className="text-4xl font-extrabold font-heading text-[#10B981]">{value}</span>
       </div>
       <input
         type="range"
@@ -27,9 +27,9 @@ function RangeInput({ value, onChange, label, max = 10 }: RangeInputProps) {
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-3 bg-grid rounded-lg appearance-none cursor-pointer accent-primary"
+        className="w-full"
       />
-      <div className="flex justify-between text-[10px] text-text-muted uppercase">
+      <div className="flex justify-between text-[10px] text-[#666666] uppercase">
         <span>Sem {label}</span>
         <span>Extremo</span>
       </div>
@@ -67,9 +67,9 @@ export default function ReadinessPage() {
     <div className="h-full flex flex-col justify-between py-6 min-h-[80vh] px-4 max-w-md mx-auto">
       {/* Header */}
       <div className="text-center space-y-2">
-        <div className="text-xs font-bold text-text-muted uppercase tracking-widest">Passo {step} de 4</div>
-        <div className="h-1 w-full bg-grid/30 rounded-full overflow-hidden">
-          <div className="h-full bg-primary transition-all duration-300" style={{ width: `${(step / 4) * 100}%` }}></div>
+        <div className="text-xs font-semibold font-heading text-[#A3A3A3] uppercase tracking-widest">Passo {step} de 4</div>
+        <div className="h-1.5 w-full neu-inset rounded-full overflow-hidden">
+          <div className="h-full gradient-primary transition-all duration-300 rounded-full" style={{ width: `${(step / 4) * 100}%` }} />
         </div>
       </div>
 
@@ -78,9 +78,9 @@ export default function ReadinessPage() {
 
         {step === 1 && (
           <>
-            <h2 className="text-2xl font-bold font-chakra text-white mb-4">Nível de Dor Agora?</h2>
+            <h2 className="text-2xl font-semibold font-heading text-white mb-4">Nivel de Dor Agora?</h2>
             <RangeInput value={pain} onChange={setPain} label="Dor" />
-            <p className="text-sm text-text-muted text-center mt-4">
+            <p className="text-sm text-[#A3A3A3] text-center mt-4">
               0 = Zero dor <br /> 10 = Hospital
             </p>
           </>
@@ -88,65 +88,60 @@ export default function ReadinessPage() {
 
         {step === 2 && (
           <>
-            <h2 className="text-2xl font-bold font-chakra text-white mb-4">Sensação de Instabilidade?</h2>
+            <h2 className="text-2xl font-semibold font-heading text-white mb-4">Sensacao de Instabilidade?</h2>
             <RangeInput value={instability} onChange={setInstability} label="Instabilidade" />
-            <p className="text-sm text-text-muted text-center mt-4">
-              0 = Tornozelo de aço <br /> 10 = Gelatina
+            <p className="text-sm text-[#A3A3A3] text-center mt-4">
+              0 = Tornozelo de aco <br /> 10 = Gelatina
             </p>
           </>
         )}
 
         {step === 3 && (
           <>
-            <h2 className="text-2xl font-bold font-chakra text-white mb-6">Histórico Recente</h2>
-            <p className="text-sm text-text-muted mb-6">Você teve algum episódio de &quot;quase virar&quot; ou falseio nos últimos 7 dias?</p>
+            <h2 className="text-2xl font-semibold font-heading text-white mb-6">Historico Recente</h2>
+            <p className="text-sm text-[#A3A3A3] mb-6">Voce teve algum episodio de &quot;quase virar&quot; ou falseio nos ultimos 7 dias?</p>
             <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant={recentFall === false ? "default" : "outline"}
-                className={recentFall === false ? "bg-primary text-carbon h-32 text-xl font-chakra font-bold" : "h-32 text-xl font-chakra bg-blueprint/20 border-grid hover:bg-grid/20 text-white"}
+              <button
+                className={`h-32 text-xl font-heading font-semibold rounded-[14px] transition-all cursor-pointer ${recentFall === false ? "gradient-primary text-[#0A0A0A] shadow-glow-primary" : "neu-button text-white"}`}
                 onClick={() => setRecentFall(false)}
               >
-                NÃO
-              </Button>
-              <Button
-                variant={recentFall === true ? "destructive" : "outline"}
-                className={recentFall === true ? "h-32 text-xl font-chakra font-bold" : "h-32 text-xl font-chakra bg-blueprint/20 border-grid hover:bg-grid/20 text-white"}
+                NAO
+              </button>
+              <button
+                className={`h-32 text-xl font-heading font-semibold rounded-[14px] transition-all cursor-pointer ${recentFall === true ? "gradient-danger text-white" : "neu-button text-white"}`}
                 onClick={() => setRecentFall(true)}
               >
                 SIM
-              </Button>
+              </button>
             </div>
           </>
         )}
 
         {step === 4 && (
           <>
-            <h2 className="text-2xl font-bold font-chakra text-white mb-2">Micro-Teste</h2>
-            <p className="text-sm text-text-muted mb-6 bg-blueprint/40 p-4 rounded-lg border border-grid">
-              Fique em um pé só por 10 segundos (pode usar parede por perto). Como foi?
+            <h2 className="text-2xl font-semibold font-heading text-white mb-2">Micro-Teste</h2>
+            <p className="text-sm text-[#A3A3A3] mb-6 neu-inset p-4 rounded-xl">
+              Fique em um pe so por 10 segundos (pode usar parede por perto). Como foi?
             </p>
             <div className="space-y-3">
-              <Button
-                fullWidth
-                className={microTest === 'firm' ? "bg-primary text-carbon h-16 text-lg justify-start px-6 font-bold" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20 text-white"}
+              <button
+                className={`w-full h-16 text-lg flex items-center px-6 font-semibold rounded-[14px] transition-all cursor-pointer ${microTest === 'firm' ? "gradient-primary text-[#0A0A0A] shadow-glow-primary" : "neu-button text-white"}`}
                 onClick={() => setMicroTest('firm')}
               >
-                <CheckCircle className="mr-3 h-5 w-5" /> Firme (Fácil)
-              </Button>
-              <Button
-                fullWidth
-                className={microTest === 'shaky' ? "bg-warning text-carbon h-16 text-lg justify-start px-6 font-bold" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20 text-white"}
+                <CheckCircle className="mr-3 h-5 w-5" /> Firme (Facil)
+              </button>
+              <button
+                className={`w-full h-16 text-lg flex items-center px-6 font-semibold rounded-[14px] transition-all cursor-pointer ${microTest === 'shaky' ? "gradient-warm text-[#0A0A0A]" : "neu-button text-white"}`}
                 onClick={() => setMicroTest('shaky')}
               >
-                <AlertTriangle className="mr-3 h-5 w-5" /> Tremido (Esforço)
-              </Button>
-              <Button
-                fullWidth
-                className={microTest === 'unstable' ? "bg-danger text-white h-16 text-lg justify-start px-6 font-bold" : "bg-blueprint/20 border border-grid h-16 text-lg justify-start px-6 hover:bg-grid/20 text-white"}
+                <AlertTriangle className="mr-3 h-5 w-5" /> Tremido (Esforco)
+              </button>
+              <button
+                className={`w-full h-16 text-lg flex items-center px-6 font-semibold rounded-[14px] transition-all cursor-pointer ${microTest === 'unstable' ? "gradient-danger text-white" : "neu-button text-white"}`}
                 onClick={() => setMicroTest('unstable')}
               >
-                <AlertTriangle className="mr-3 h-5 w-5" /> Instável (Apoiei)
-              </Button>
+                <AlertTriangle className="mr-3 h-5 w-5" /> Instavel (Apoiei)
+              </button>
             </div>
           </>
         )}
@@ -161,12 +156,12 @@ export default function ReadinessPage() {
           </Button>
         )}
         <Button
-          className="flex-1 bg-primary text-carbon font-bold"
+          className="flex-1"
           size="lg"
           disabled={(step === 3 && recentFall === null) || (step === 4 && microTest === null)}
           onClick={step === 4 ? handleFinish : nextStep}
         >
-          {step === 4 ? "Gerar Plano" : "Próximo"} <ArrowRight className="ml-2 h-4 w-4" />
+          {step === 4 ? "Gerar Plano" : "Proximo"} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
 

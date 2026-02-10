@@ -17,10 +17,8 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 py-3 px-6 bg-carbon/90 border-t border-grid backdrop-blur-xl">
-      <div className="max-w-md mx-auto flex justify-between items-center relative">
-        {/* Active Indicator Glow/Bar could go here */}
-        
+    <nav className="fixed bottom-4 left-4 right-4 z-50 px-4 py-3 rounded-2xl neu-card" style={{ background: '#1A1A1A' }}>
+      <div className="max-w-md mx-auto flex justify-between items-center">
         {navItems.map((item) => {
           const isActive = pathname === item.path;
           return (
@@ -28,20 +26,22 @@ export function BottomNav() {
               key={item.path}
               onClick={() => router.push(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-all duration-300 relative group",
-                isActive ? "text-primary -translate-y-1" : "text-muted-foreground hover:text-white"
+                "flex flex-col items-center justify-center gap-1 transition-all duration-200 relative min-w-[48px] min-h-[44px] cursor-pointer",
+                isActive ? "text-[#10B981]" : "text-[#A3A3A3] hover:text-white"
               )}
             >
-              {/* Active Glow */}
               {isActive && (
-                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 opacity-50"></div>
+                <div className="absolute -top-1 w-8 h-1 rounded-full gradient-primary" />
               )}
-              
-              <item.icon 
-                className={cn("h-6 w-6 relative z-10 transition-transform duration-300", isActive && "scale-110")} 
-                strokeWidth={isActive ? 2.5 : 2}
+
+              <item.icon
+                className={cn("h-5 w-5 transition-transform duration-200", isActive && "scale-110")}
+                strokeWidth={isActive ? 2.5 : 1.8}
               />
-              <span className={cn("text-[10px] font-chakra font-bold tracking-wider relative z-10", isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity")}>
+              <span className={cn(
+                "text-[10px] font-heading font-semibold tracking-wide transition-opacity duration-200",
+                isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}>
                 {item.label}
               </span>
             </button>

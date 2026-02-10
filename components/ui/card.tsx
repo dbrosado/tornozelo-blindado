@@ -8,15 +8,11 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border border-border/50 bg-card/80 text-card-foreground shadow-lg backdrop-blur-md relative overflow-hidden group",
+      "neu-card text-[var(--card-foreground)] relative overflow-hidden",
       className
     )}
     {...props}
-  >
-     {/* Subtle Glass Noise/Texture */}
-     <div className="absolute inset-0 bg-transparent pointer-events-none z-0 mix-blend-overlay opacity-5 group-hover:opacity-10 transition-opacity duration-500"></div>
-     <div className="relative z-10">{props.children}</div>
-  </div>
+  />
 ))
 Card.displayName = "Card"
 
@@ -38,7 +34,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight font-chakra uppercase", className)}
+    className={cn("font-heading font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ))
@@ -50,7 +46,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-[var(--muted-foreground)]", className)}
     {...props}
   />
 ))

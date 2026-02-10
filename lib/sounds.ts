@@ -1,14 +1,22 @@
 // Sound effects for timer mode
 
 let audioContext: AudioContext | null = null;
+type BrowserWindowWithWebkitAudio = Window & {
+  webkitAudioContext?: typeof AudioContext;
+};
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
-  
+
   if (!audioContext) {
     try {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    } catch (e) {
+      const browserWindow = window as BrowserWindowWithWebkitAudio;
+      const AudioContextClass = window.AudioContext || browserWindow.webkitAudioContext;
+      if (!AudioContextClass) {
+        return null;
+      }
+      audioContext = new AudioContextClass();
+    } catch {
       console.warn('AudioContext not supported');
       return null;
     }

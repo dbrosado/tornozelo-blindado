@@ -1,21 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Chakra_Petch, Inter } from "next/font/google";
+import { Poppins, Open_Sans } from "next/font/google";
 import "./globals.css";
 
-const chakraPetch = Chakra_Petch({
-  weight: ["300", "400", "500", "600", "700"],
+const poppins = Poppins({
+  weight: ["400", "600", "800"],
   subsets: ["latin"],
-  variable: "--font-chakra-petch",
+  variable: "--font-poppins",
+  display: "swap",
 });
 
-const inter = Inter({
+const openSans = Open_Sans({
+  weight: ["400", "600"],
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-open-sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Tornozelo Blindado",
-  description: "Protocolo de reabilitação e fortalecimento de tornozelo.",
+  description: "Protocolo de reabilitacao e fortalecimento de tornozelo.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -24,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090b",
+  themeColor: "#0A0A0A",
 };
 
 export default function RootLayout({
@@ -33,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${chakraPetch.variable} ${inter.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased bg-carbon text-text-main min-h-screen selection:bg-primary selection:text-carbon" suppressHydrationWarning>
+    <html lang="pt-BR" className={`${poppins.variable} ${openSans.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-[#0A0A0A] text-white min-h-screen selection:bg-primary/30 selection:text-white" suppressHydrationWarning>
         {children}
       </body>
     </html>

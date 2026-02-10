@@ -1,214 +1,134 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { differenceInDays } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
-import {
-  REALMS,
-  canUnlockStage,
-  getStageById
-} from "@/lib/data/cultivation-system";
+import { getStageById, REALMS, CULTIVATION_STAGES } from "@/lib/data/cultivation-system";
+import { LEVELS as WORKOUT_LEVELS, getWorkoutByLevel } from "@/lib/data/workouts";
 import { cn } from "@/lib/utils";
-import { Lock, Unlock, ChevronRight, AlertTriangle, Zap, Star } from "lucide-react";
+import { Lock, ChevronRight, Unlock, Layers } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function LibraryPage() {
   const router = useRouter();
-  const {
-    unlockedStages,
-    startDate,
-    totalSessions,
-    postWorkoutRatings,
-    currentStageId,
-    actions
-  } = useAppStore();
-
-  const daysSinceStart = useMemo(() => {
-    if (!startDate) return 0;
-    return differenceInDays(new Date(), new Date(startDate));
-  }, [startDate]);
-
-  const avgDifficulty = useMemo(() => {
-    if (postWorkoutRatings.length === 0) return 0;
-    return postWorkoutRatings.reduce((sum, r) => sum + r.difficulty, 0) / postWorkoutRatings.length;
-  }, [postWorkoutRatings]);
+  const { currentStageId, actions } = useAppStore();
+  const [expandedRealm, setExpandedRealm] = useState<number | null>(null);
+  const [overrideMode, setOverrideMode] = useState(false);
 
   const handleStageClick = (stageId: number) => {
-    if (unlockedStages.includes(stageId)) {
-      // Navigate to workout with this stage
-      router.push(`/app/session?stage=${stageId}`);
-    }
-  };
-
-  const handleForceUnlock = (stageId: number) => {
-    if (confirm(`⚠️ AVISO DE SEGURANÇA\n\nDesbloquear estágios avançados sem a preparação adequada pode causar lesão no tendão.\n\nVocê tem certeza que quer pular para o Estágio ${stageId}?`)) {
-      actions.forceUnlockStage(stageId);
+    if (stageId <= currentStageId || overrideMode) {
+      if (overrideMode) {
+        actions.forceUnlockStage(stageId);
+        useAppStore.setState({ currentStageId: stageId });
+      }
+      router.push('/app/today');
     }
   };
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Header */}
-      <header className="space-y-1">
-        <h1 className="text-2xl font-black font-chakra uppercase text-white tracking-tight">
-          Biblioteca de Treinos
-        </h1>
-        <p className="text-xs text-text-muted uppercase tracking-widest">
-          Saga da Ascensão do Tendão • 10 Estágios
-        </p>
+    <div className="space-y-6 pb-24">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold font-heading text-white tracking-tight">BIBLIOTECA</h1>
+          <p className="text-xs text-[#A3A3A3] uppercase tracking-widest">Explorar Estagios</p>
+        </div>
+        <Button
+          variant={overrideMode ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setOverrideMode(!overrideMode)}
+          className="text-xs"
+        >
+          {overrideMode ? <Unlock className="h-3 w-3 mr-1" /> : <Lock className="h-3 w-3 mr-1" />}
+          {overrideMode ? "Livre" : "Normal"}
+        </Button>
       </header>
 
-      {/* Realms */}
-      {REALMS.map((realm) => (
-        <div key={realm.name} className="space-y-3">
-          {/* Realm Header */}
-          <div className="flex items-center gap-2">
-            <div className={cn("h-px flex-1 bg-gradient-to-r from-transparent to-current opacity-30", realm.color)} />
-            <h2 className={cn("text-sm font-bold uppercase tracking-widest", realm.color)}>
-              {realm.name}
-            </h2>
-            <div className={cn("h-px flex-1 bg-gradient-to-l from-transparent to-current opacity-30", realm.color)} />
-          </div>
+      {REALMS.map((realm, realmIdx) => {
+        const stages = realm.stages.map(sId => getStageById(sId));
+        const isExpanded = expandedRealm === realmIdx;
 
-          {/* Stages in this Realm */}
-          <div className="space-y-2">
-            {realm.stages.map((stageId) => {
-              const stage = getStageById(stageId);
-              const isUnlocked = unlockedStages.includes(stageId);
-              const isCurrent = stageId === currentStageId;
-              const { canUnlock, reasons } = canUnlockStage(stage, daysSinceStart, totalSessions, avgDifficulty);
+        return (
+          <Card key={realm.name} className={cn("overflow-hidden", isExpanded && "border-[#10B981]/30")}>
+            <button
+              className="w-full text-left p-5 flex items-center justify-between cursor-pointer"
+              onClick={() => setExpandedRealm(isExpanded ? null : realmIdx)}
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn("p-2.5 rounded-xl", isExpanded ? "gradient-primary" : "neu-inset")}>
+                  <Layers className={cn("h-5 w-5", isExpanded ? "text-[#0A0A0A]" : "text-[#A3A3A3]")} />
+                </div>
+                <div>
+                  <h3 className={cn("font-heading font-semibold text-sm", realm.color)}>{realm.name}</h3>
+                  <p className="text-[10px] text-[#666666] uppercase tracking-wider">
+                    {stages.length} estagios
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className={cn(
+                "h-5 w-5 text-[#A3A3A3] transition-transform duration-300",
+                isExpanded && "rotate-90 text-[#10B981]"
+              )} />
+            </button>
 
-              return (
-                <div
-                  key={stageId}
-                  className={cn(
-                    "relative rounded-xl border p-4 transition-all",
-                    isUnlocked
-                      ? "bg-blueprint/30 border-grid/50 hover:border-primary/30 cursor-pointer"
-                      : "bg-grid/10 border-grid/20 opacity-60",
-                    isCurrent && "border-primary/50 ring-1 ring-primary/30"
-                  )}
-                  onClick={() => isUnlocked && handleStageClick(stageId)}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Stage Icon */}
-                    <div className={cn(
-                      "text-3xl w-12 h-12 flex items-center justify-center rounded-xl",
-                      isUnlocked ? "bg-grid/30" : "bg-grid/10"
-                    )}>
-                      {isUnlocked ? stage.emoji : <Lock className="h-5 w-5 text-text-muted" />}
-                    </div>
+            {isExpanded && (
+              <CardContent className="space-y-2 pb-4">
+                {stages.map((stage, i) => {
+                  const isUnlocked = stage.id <= currentStageId || overrideMode;
+                  const isCurrent = stage.id === currentStageId;
+                  const workout = stage.id < WORKOUT_LEVELS.length ? getWorkoutByLevel(stage.id) : null;
 
-                    {/* Stage Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-text-muted">Estágio {stageId}</span>
-                        {isCurrent && (
-                          <span className="text-[10px] px-2 py-0.5 bg-primary/20 text-primary rounded-full font-bold uppercase">
-                            Atual
-                          </span>
+                  return (
+                    <motion.button
+                      key={stage.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      onClick={() => handleStageClick(stage.id)}
+                      disabled={!isUnlocked}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-4 rounded-[14px] text-left transition-all cursor-pointer",
+                        isUnlocked
+                          ? isCurrent
+                            ? "neu-card border-[#10B981]/30"
+                            : "neu-button"
+                          : "bg-[#0A0A0A]/50 opacity-40 cursor-not-allowed",
+                      )}
+                    >
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-heading font-bold shrink-0",
+                        isCurrent ? "gradient-primary text-[#0A0A0A]" : isUnlocked ? "neu-inset text-[#A3A3A3]" : "bg-[#0A0A0A] text-[#333333]"
+                      )}>
+                        {isUnlocked ? stage.emoji : <Lock className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "font-heading font-semibold text-sm truncate",
+                          isCurrent ? "text-[#10B981]" : isUnlocked ? "text-white" : "text-[#666666]"
+                        )}>
+                          {stage.name}
+                        </p>
+                        {workout && isUnlocked && (
+                          <p className="text-[10px] text-[#666666] truncate">
+                            {workout.exercises.length} exercicios - {workout.duration} min
+                          </p>
+                        )}
+                        {!isUnlocked && (
+                          <p className="text-[10px] text-[#444444]">
+                            Requer estagio {stage.id}
+                          </p>
                         )}
                       </div>
-                      <h3 className={cn(
-                        "font-bold font-chakra uppercase truncate",
-                        isUnlocked ? "text-white" : "text-text-muted"
-                      )}>
-                        {stage.name}
-                      </h3>
-                      <p className="text-[11px] text-text-muted line-clamp-1">
-                        {stage.description}
-                      </p>
-                    </div>
-
-                    {/* Status */}
-                    <div className="shrink-0">
-                      {isUnlocked ? (
-                        <ChevronRight className="h-5 w-5 text-text-muted" />
-                      ) : canUnlock ? (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            actions.forceUnlockStage(stageId);
-                          }}
-                        >
-                          <Unlock className="h-4 w-4 mr-1" />
-                          Liberar
-                        </Button>
-                      ) : (
-                        <Lock className="h-5 w-5 text-text-muted" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Requirements (if locked) */}
-                  {!isUnlocked && reasons.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-grid/20">
-                      <p className="text-[10px] text-text-muted mb-1 uppercase tracking-wider">
-                        Requisitos:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {reasons.map((reason, i) => (
-                          <span
-                            key={i}
-                            className="text-[10px] px-2 py-1 bg-grid/20 rounded text-text-muted"
-                          >
-                            {reason}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Override Button for advanced users */}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="mt-2 text-xs text-warning/70 hover:text-warning"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleForceUnlock(stageId);
-                        }}
-                      >
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Desbloquear mesmo assim (Atleta avançado)
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      {/* Legend */}
-      <div className="bg-grid/10 rounded-xl p-4 space-y-2">
-        <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">Legenda</h4>
-        <div className="grid grid-cols-2 gap-2 text-[11px] text-text-muted">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded">
-              <Star className="h-3 w-3 text-primary" />
-            </div>
-            <span>Estágio atual</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 flex items-center justify-center bg-grid/30 rounded">
-              <Lock className="h-3 w-3 text-text-muted" />
-            </div>
-            <span>Bloqueado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-warning" />
-            <span>Dias + Sessões + Dificuldade</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-warning/60" />
-            <span>Override disponível</span>
-          </div>
-        </div>
-      </div>
+                      {isUnlocked && <ChevronRight className="h-4 w-4 text-[#A3A3A3] shrink-0" />}
+                    </motion.button>
+                  );
+                })}
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }

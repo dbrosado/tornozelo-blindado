@@ -19,6 +19,10 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-open-sans)', 'Open Sans', 'sans-serif'],
+        heading: ['var(--font-poppins)', 'Poppins', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -26,77 +30,52 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
         },
-        // Obsidian & Volt Colors
-        volt: {
-          DEFAULT: "#a3e635",
-          glow: "rgba(163, 230, 53, 0.5)",
-          dim: "rgba(163, 230, 53, 0.1)"
-        },
-        gold: {
-          DEFAULT: "#fbbf24",
-          glow: "rgba(251, 191, 36, 0.5)",
-          dim: "rgba(251, 191, 36, 0.1)"
-        },
-        carbon: {
-          DEFAULT: "#09090b",
-          100: "#f4f4f5",
-          200: "#e4e4e7",
-          300: "#d4d4d8",
-          400: "#a1a1aa",
-          500: "#71717a",
-          600: "#52525b",
-          700: "#3f3f46",
-          800: "#27272a",
-          900: "#18181b",
-          950: "#09090b"
-        },
-        grid: {
-          DEFAULT: "#3f3f46"
-        },
-        blueprint: {
-          DEFAULT: "#1e3a8a",
-          10: "#f0f9ff",
-          20: "rgba(30, 58, 138, 0.2)",
-          30: "rgba(30, 58, 138, 0.3)",
-          40: "rgba(30, 58, 138, 0.4)",
+        success: {
+          DEFAULT: "var(--success)",
         },
         warning: {
-          DEFAULT: "#f59e0b"
+          DEFAULT: "var(--warning)",
         },
-        danger: {
-          DEFAULT: "#ef4444"
+        error: {
+          DEFAULT: "var(--error)",
+        },
+        surface: {
+          DEFAULT: "#1A1A1A",
+          light: "#222222",
+          dark: "#141414",
         },
         text: {
-          main: "#fafafa",
-          muted: "#a1a1aa"
-        }
+          main: "#FFFFFF",
+          muted: "#A3A3A3",
+          subtle: "#666666",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -104,9 +83,13 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'glow-volt': '0 0 20px -5px rgba(163, 230, 53, 0.4)',
-        'glow-gold': '0 0 20px -5px rgba(251, 191, 36, 0.4)',
-        'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+        'neu-outset': '6px 6px 12px rgba(0, 0, 0, 0.7), -4px -4px 10px rgba(60, 60, 60, 0.15)',
+        'neu-inset': 'inset 4px 4px 8px rgba(0, 0, 0, 0.6), inset -3px -3px 6px rgba(60, 60, 60, 0.1)',
+        'neu-soft': '4px 4px 8px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(50, 50, 50, 0.12)',
+        'neu-pressed': 'inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -2px -2px 4px rgba(50, 50, 50, 0.08)',
+        'glow-primary': '0 0 20px -5px rgba(16, 185, 129, 0.4)',
+        'glow-accent': '0 0 20px -5px rgba(59, 130, 246, 0.4)',
+        'glow-warm': '0 0 20px -5px rgba(245, 158, 11, 0.4)',
       },
       keyframes: {
         "accordion-down": {
