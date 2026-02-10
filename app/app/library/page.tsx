@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
-import { getStageById, REALMS, CULTIVATION_STAGES } from "@/lib/data/cultivation-system";
+import { getStageById, REALMS } from "@/lib/data/cultivation-system";
 import { LEVELS as WORKOUT_LEVELS, getWorkoutByLevel } from "@/lib/data/workouts";
 import { cn } from "@/lib/utils";
 import { Lock, ChevronRight, Unlock, Layers } from "lucide-react";

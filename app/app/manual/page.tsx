@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Clock, Timer, Heart, ShieldAlert, Activity, BookOpen } from "lucide-react";
+import { Clock, Timer, Heart, ShieldAlert, Activity, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -13,7 +13,6 @@ const articles = [
 ];
 
 export default function ManualPage() {
-  const router = useRouter();
 
   return (
     <div className="space-y-6 pb-24">

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, differenceInHours, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
+
 import { CultivationCard, CultivationBadge } from "@/components/ui/cultivation-progress";
 import { useAppStore } from "@/lib/store";
 import { getStageById } from "@/lib/data/cultivation-system";
