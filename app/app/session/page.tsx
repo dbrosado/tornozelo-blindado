@@ -12,6 +12,7 @@ import { speak, stopSpeaking } from "@/lib/tts";
 import { playBeep, playCountdownBeep, playGoBeep, playCompleteBeep, playRestBeep, playFinishFanfare } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { isSameDay } from "date-fns";
 
 type PlayerPhase = 'ready' | 'prep' | 'exercise' | 'rest' | 'finished';
 
@@ -40,7 +41,7 @@ const isRestExercise = (exerciseName: string): boolean => {
 
 export default function SessionPage() {
   const router = useRouter();
-  const { currentStageId, audioMode, setAudioMode, actions } = useAppStore();
+  const { currentStageId, audioMode, setAudioMode, actions, readiness } = useAppStore();
 
   const [phase, setPhase] = useState<PlayerPhase>('ready');
   const [exerciseIndex, setExerciseIndex] = useState(0);
@@ -157,6 +158,16 @@ export default function SessionPage() {
     }
     playBeep(800, 100);
   };
+
+  useEffect(() => {
+    const isReadyToday = readiness?.checkInDate
+      ? isSameDay(new Date(readiness.checkInDate), new Date()) && readiness.status !== null
+      : false;
+
+    if (!isReadyToday) {
+      router.replace("/app/readiness");
+    }
+  }, [readiness?.checkInDate, readiness?.status, router]);
 
   useEffect(() => {
     if (videoRef.current) {

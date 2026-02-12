@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { format, differenceInHours, differenceInMinutes } from "date-fns";
+import { format, differenceInHours, differenceInMinutes, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { CultivationCard, CultivationBadge } from "@/components/ui/cultivation-progress";
@@ -24,6 +24,7 @@ export default function TodayPage() {
     readiness,
     streak,
     currentStageId,
+    setReadiness,
     actions
   } = useAppStore();
 
@@ -34,11 +35,22 @@ export default function TodayPage() {
     typeof window !== "undefined" ? localStorage.getItem("tb_user_name") || "" : ""
   );
 
-  const today = format(new Date(), "EEEE, d MMM", { locale: ptBR });
-  const readinessStatus = readiness?.status;
+  const now = new Date();
+  const today = format(now, "EEEE, d MMM", { locale: ptBR });
+  const readinessIsToday = readiness?.checkInDate
+    ? isSameDay(new Date(readiness.checkInDate), now)
+    : false;
+  const readinessStatus = readinessIsToday ? readiness?.status : null;
 
   const inProvacao = useMemo(() => actions.isInProvacao(), [actions]);
   const provacaoProgress = useMemo(() => actions.getProvacaoProgress(), [actions]);
+
+  useEffect(() => {
+    if (!readiness?.checkInDate) return;
+    if (!isSameDay(new Date(readiness.checkInDate), new Date())) {
+      setReadiness(null);
+    }
+  }, [readiness?.checkInDate, setReadiness]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
