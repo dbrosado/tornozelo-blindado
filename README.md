@@ -32,7 +32,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 - `/auth` permite:
   - criar conta (nome + email + senha)
   - login (email + senha)
+  - login com Google
+- Callback OAuth em `/auth/callback`
 - O nome do usuário é salvo no metadata (`full_name`) e usado para personalizar o app.
+
+### Configuração recomendada no Supabase (Auth)
+- **Email provider**:
+  - Se quiser entrar sem confirmar e-mail, desative `Confirm email`.
+- **Google provider**:
+  - habilite o provider Google em Authentication > Providers
+  - configure client id/secret do Google Cloud
+  - adicione redirect URL do Supabase no Google Cloud conforme instrução da tela
 
 ---
 

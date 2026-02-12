@@ -36,13 +36,19 @@ export default function AuthPage() {
 
         if (error) throw error;
 
-        if (data.user?.email_confirmed_at) {
-          localStorage.setItem("tb_user_name", name.trim());
+        const sessionUser = data.session?.user;
+        if (sessionUser) {
+          const userName =
+            (sessionUser.user_metadata?.full_name as string | undefined) ||
+            (sessionUser.email?.split("@")[0] ?? name.trim());
+          localStorage.setItem("tb_user_name", userName);
           router.push("/app/today");
           return;
         }
 
-        setMessage("Conta criada! Confira seu e-mail para confirmar o cadastro.");
+        setMessage(
+          "Conta criada, mas ainda sem sessão. No Supabase desative 'Confirm email' para entrar sem verificar e-mail."
+        );
         return;
       }
 
@@ -67,6 +73,25 @@ export default function AuthPage() {
     }
   }
 
+  async function handleGoogleLogin() {
+    setMessage("");
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao iniciar login com Google.";
+      setMessage(errorMessage);
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-5 py-8">
       <div className="w-full max-w-md rounded-2xl border border-[#2A2A2A] bg-[#111111] p-6 shadow-xl">
@@ -75,7 +100,20 @@ export default function AuthPage() {
           {mode === "signup" ? "Crie sua conta para começar" : "Entre na sua conta"}
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div className="mt-6 space-y-3">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full h-11 rounded-xl font-semibold border border-[#333] bg-[#1A1A1A] text-white disabled:opacity-60"
+          >
+            Entrar com Google
+          </button>
+        </div>
+
+        <div className="my-4 text-center text-xs text-[#666] uppercase tracking-wider">ou</div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
             <div>
               <label className="text-xs text-[#A3A3A3] uppercase tracking-wider">Nome</label>

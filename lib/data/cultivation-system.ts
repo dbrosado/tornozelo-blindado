@@ -329,7 +329,8 @@ export function getProvacaoProgress(totalSessions: number): {
   totalDays: number;
   isComplete: boolean;
 } {
-  const currentDay = Math.min(totalSessions + 1, 7);
+  // Começa em 0% (dia 0/7) e só avança após completar sessões.
+  const currentDay = Math.min(totalSessions, 7);
   return {
     currentDay,
     totalDays: 7,
