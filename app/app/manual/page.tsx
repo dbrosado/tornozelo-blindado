@@ -1,7 +1,6 @@
 "use client";
 
 import { Clock, Timer, Heart, ShieldAlert, Activity, BookOpen } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 const articles = [

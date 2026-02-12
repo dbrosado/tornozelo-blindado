@@ -24,7 +24,6 @@ export default function TodayPage() {
     readiness,
     streak,
     currentStageId,
-    totalSessions,
     actions
   } = useAppStore();
 
@@ -38,8 +37,8 @@ export default function TodayPage() {
   const today = format(new Date(), "EEEE, d MMM", { locale: ptBR });
   const readinessStatus = readiness?.status;
 
-  const inProvacao = useMemo(() => actions.isInProvacao(), [actions, totalSessions]);
-  const provacaoProgress = useMemo(() => actions.getProvacaoProgress(), [actions, totalSessions]);
+  const inProvacao = useMemo(() => actions.isInProvacao(), [actions]);
+  const provacaoProgress = useMemo(() => actions.getProvacaoProgress(), [actions]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

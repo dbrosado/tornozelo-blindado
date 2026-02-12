@@ -50,6 +50,12 @@ export type ReadinessStatus = 'green' | 'yellow' | 'red' | null;
 export type DifficultyRating = 1 | 2 | 3; // Leve, Moderado, Difícil
 export type AudioMode = 'voice' | 'timer'; // Voice narration or timer only
 
+export interface UserProfile {
+  goal: 'dor' | 'performance' | 'retorno';
+  painBaseline: number; // 0-10
+  level: 'iniciante' | 'intermediario' | 'avancado';
+}
+
 export interface PostWorkoutRating {
   date: string;
   difficulty: DifficultyRating;
@@ -89,6 +95,10 @@ interface AppState {
   // Audio Mode
   audioMode: AudioMode;
 
+  // Onboarding/Profile
+  onboardingCompleted: boolean;
+  profile: UserProfile | null;
+
   // Setters
   setReadiness: (status: ReadinessStatus) => void;
   setAudioMode: (mode: AudioMode) => void;
@@ -100,6 +110,7 @@ interface AppState {
     resetProgress: () => void;
     resetTimer: () => void;
     forceUnlockStage: (stageId: number) => void;
+    completeOnboarding: (profile: UserProfile) => void;
     getDaysSinceStart: () => number;
     getAverageDifficulty: () => number;
     isInProvacao: () => boolean;
@@ -130,6 +141,8 @@ export const useAppStore = create<AppState>()(
       postWorkoutRatings: [],
       readiness: { status: null, checkInDate: null },
       audioMode: 'voice', // Default to voice narration
+      onboardingCompleted: false,
+      profile: null,
 
       // Setters
       setReadiness: (status) => set({ readiness: { status, checkInDate: new Date().toISOString() } }),
@@ -218,7 +231,9 @@ export const useAppStore = create<AppState>()(
             totalSessions: 0,
             lastSession: null,
             postWorkoutRatings: [],
-            readiness: { status: null, checkInDate: null }
+            readiness: { status: null, checkInDate: null },
+            onboardingCompleted: false,
+            profile: null,
           });
           // Force page reload to reset hydration state
           if (typeof window !== 'undefined') {
@@ -237,6 +252,11 @@ export const useAppStore = create<AppState>()(
             ? state.unlockedStages
             : [...state.unlockedStages, stageId].sort((a, b) => a - b)
         })),
+
+        completeOnboarding: (profile) => set({
+          onboardingCompleted: true,
+          profile,
+        }),
 
         getDaysSinceStart: () => {
           const state = get();
@@ -300,6 +320,8 @@ export const useAppStore = create<AppState>()(
         postWorkoutRatings: state.postWorkoutRatings,
         readiness: state.readiness,
         audioMode: state.audioMode, // Persist audio mode
+        onboardingCompleted: state.onboardingCompleted,
+        profile: state.profile,
       })
     }
   )

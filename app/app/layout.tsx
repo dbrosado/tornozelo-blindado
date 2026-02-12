@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BottomNav } from "@/components/shared/bottom-nav";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { useAppStore } from "@/lib/store";
 
 export default function AppLayout({
   children,
@@ -11,7 +12,9 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = useMemo(() => getSupabaseClient(), []);
+  const onboardingCompleted = useAppStore((s) => s.onboardingCompleted);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,12 @@ export default function AppLayout({
 
       const fullName = (data.session.user.user_metadata?.full_name as string | undefined) || "";
       if (fullName) localStorage.setItem("tb_user_name", fullName);
+
+      if (!onboardingCompleted && pathname !== "/app/onboarding") {
+        router.replace("/app/onboarding");
+        return;
+      }
+
       setLoading(false);
     });
 
@@ -37,7 +46,7 @@ export default function AppLayout({
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [onboardingCompleted, pathname, router, supabase]);
 
   if (loading) {
     return (
@@ -47,10 +56,12 @@ export default function AppLayout({
     );
   }
 
+  const showBottomNav = pathname !== "/app/onboarding";
+
   return (
-    <div className="relative min-h-screen bg-[#0A0A0A] text-white pb-24">
+    <div className={`relative min-h-screen bg-[#0A0A0A] text-white ${showBottomNav ? "pb-24" : ""}`}>
       <main className="container max-w-md mx-auto px-5 py-6">{children}</main>
-      <BottomNav />
+      {showBottomNav && <BottomNav />}
     </div>
   );
 }
