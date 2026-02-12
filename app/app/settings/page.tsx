@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
-import { Download, Upload, Trash2, AlertTriangle } from "lucide-react";
+import { getSupabaseClient } from "@/lib/supabase-client";
+import { Download, Upload, Trash2, AlertTriangle, LogOut } from "lucide-react";
 
 type AppSnapshot = ReturnType<typeof useAppStore.getState>;
 type PersistedBackup = Pick<
@@ -100,6 +102,8 @@ function sanitizeBackup(raw: unknown): PersistedBackup | null {
 
 export default function SettingsPage() {
   const { actions } = useAppStore();
+  const router = useRouter();
+  const supabase = useMemo(() => getSupabaseClient(), []);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
 
@@ -187,6 +191,14 @@ export default function SettingsPage() {
     alert("Progresso resetado.");
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tb_user_name");
+    }
+    router.push("/auth");
+  };
+
   return (
     <div className="space-y-6 pb-24">
       <header>
@@ -205,6 +217,9 @@ export default function SettingsPage() {
           </Button>
           <Button variant="outline" fullWidth onClick={handleImport} className="justify-start gap-3">
             <Upload className="h-4 w-4 text-[#3B82F6]" /> Importar Dados
+          </Button>
+          <Button variant="outline" fullWidth onClick={handleLogout} className="justify-start gap-3">
+            <LogOut className="h-4 w-4 text-[#A3A3A3]" /> Sair da conta
           </Button>
         </CardContent>
       </Card>

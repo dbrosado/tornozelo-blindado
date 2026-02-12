@@ -31,6 +31,9 @@ export default function TodayPage() {
   const [isLocked, setIsLocked] = useState(false);
   const [unlockTime, setUnlockTime] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState("");
+  const [userName] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("tb_user_name") || "" : ""
+  );
 
   const today = format(new Date(), "EEEE, d MMM", { locale: ptBR });
   const readinessStatus = readiness?.status;
@@ -104,7 +107,7 @@ export default function TodayPage() {
         <header className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-extrabold font-heading text-white tracking-tight">
-              Tornozelo Blindado
+              {userName ? `Tornozelo Blindado • ${userName}` : "Tornozelo Blindado"}
             </h1>
             <p className="text-xs text-[#A3A3A3] uppercase tracking-widest mt-1">{today}</p>
           </div>
@@ -165,7 +168,7 @@ export default function TodayPage() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold font-heading text-white tracking-tight">
-            Tornozelo Blindado
+            {userName ? `Tornozelo Blindado • ${userName}` : "Tornozelo Blindado"}
           </h1>
           <p className="text-xs text-[#A3A3A3] uppercase tracking-widest mt-1">{today}</p>
         </div>
